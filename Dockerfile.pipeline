@@ -1,0 +1,31 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# OpenCV and system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgl1-mesa-glx libglib2.0-0 libsm6 libxext6 libxrender-dev \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY pipeline/requirements.txt ./pipeline/requirements.txt
+RUN pip install --no-cache-dir -r pipeline/requirements.txt
+
+COPY pipeline/ ./pipeline/
+COPY data/ ./data/
+
+ENV PYTHONPATH=/app
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Default processes CAM 1 for store_001.
+# For all 5 cameras, run scripts/run_pipeline_all.sh instead.
+# NOTE: Filenames contain spaces — Docker CMD handles this correctly via JSON array syntax.
+CMD ["python", "-m", "pipeline.main", \
+     "--video", "data/CAM 1.mp4", \
+     "--store", "store_001", \
+     "--camera", "cam_entry", \
+     "--redis", "redis://redis:6379/0", \
+     "--output", "data/events_output.jsonl", \
+     "--start-time", "2026-05-29T10:00:00", \
+     "--frame-skip", "2"]

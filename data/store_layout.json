@@ -1,0 +1,138 @@
+{
+  "stores": {
+    "store_001": {
+      "name": "Apex Retail - Koramangala",
+      "city": "Bangalore",
+      "open_time": "09:00",
+      "close_time": "21:00",
+      "cameras": {
+        "cam_entry": {
+          "type": "entry",
+          "position": "main_entrance",
+          "resolution": "1080p",
+          "fps": 15
+        },
+        "cam_floor": {
+          "type": "floor",
+          "position": "ceiling_center",
+          "resolution": "1080p",
+          "fps": 15
+        },
+        "cam_billing": {
+          "type": "billing",
+          "position": "billing_area",
+          "resolution": "1080p",
+          "fps": 15
+        }
+      },
+      "zones": {
+        "entrance": {
+          "label": "Main Entrance",
+          "polygon": [[0, 0], [100, 0], [100, 50], [0, 50]],
+          "type": "entrance"
+        },
+        "cosmetics": {
+          "label": "Cosmetics Section",
+          "polygon": [[0, 50], [50, 50], [50, 150], [0, 150]],
+          "type": "shopping"
+        },
+        "skincare": {
+          "label": "Skincare Section",
+          "polygon": [[50, 50], [100, 50], [100, 150], [50, 150]],
+          "type": "shopping"
+        },
+        "fragrance": {
+          "label": "Fragrance Section",
+          "polygon": [[0, 150], [50, 150], [50, 250], [0, 250]],
+          "type": "shopping"
+        },
+        "haircare": {
+          "label": "Haircare Section",
+          "polygon": [[50, 150], [100, 150], [100, 250], [50, 250]],
+          "type": "shopping"
+        },
+        "billing": {
+          "label": "Billing Counter",
+          "polygon": [[0, 250], [100, 250], [100, 300], [0, 300]],
+          "type": "billing"
+        }
+      }
+    },
+    "store_002": {
+      "name": "Apex Retail - Indiranagar",
+      "city": "Bangalore",
+      "open_time": "10:00",
+      "close_time": "22:00",
+      "cameras": {
+        "cam_entry": { "type": "entry", "position": "main_entrance", "resolution": "1080p", "fps": 15 },
+        "cam_floor": { "type": "floor", "position": "ceiling_center", "resolution": "1080p", "fps": 15 },
+        "cam_billing": { "type": "billing", "position": "billing_area", "resolution": "1080p", "fps": 15 }
+      },
+      "zones": {
+        "entrance": { "label": "Main Entrance", "polygon": [[0, 0], [120, 0], [120, 60], [0, 60]], "type": "entrance" },
+        "cosmetics": { "label": "Cosmetics Section", "polygon": [[0, 60], [60, 60], [60, 180], [0, 180]], "type": "shopping" },
+        "skincare": { "label": "Skincare Section", "polygon": [[60, 60], [120, 60], [120, 180], [60, 180]], "type": "shopping" },
+        "fragrance": { "label": "Fragrance Section", "polygon": [[0, 180], [60, 180], [60, 280], [0, 280]], "type": "shopping" },
+        "haircare": { "label": "Haircare Section", "polygon": [[60, 180], [120, 180], [120, 280], [60, 280]], "type": "shopping" },
+        "billing": { "label": "Billing Counter", "polygon": [[0, 280], [120, 280], [120, 340], [0, 340]], "type": "billing" }
+      }
+    },
+    "store_003": {
+      "name": "Apex Retail - Bandra",
+      "city": "Mumbai",
+      "open_time": "09:30",
+      "close_time": "21:30",
+      "cameras": {
+        "cam_entry": { "type": "entry", "position": "main_entrance", "resolution": "1080p", "fps": 15 },
+        "cam_floor": { "type": "floor", "position": "ceiling_center", "resolution": "1080p", "fps": 15 },
+        "cam_billing": { "type": "billing", "position": "billing_area", "resolution": "1080p", "fps": 15 }
+      },
+      "zones": {
+        "entrance": { "label": "Main Entrance", "polygon": [[0, 0], [110, 0], [110, 55], [0, 55]], "type": "entrance" },
+        "cosmetics": { "label": "Cosmetics Section", "polygon": [[0, 55], [55, 55], [55, 165], [0, 165]], "type": "shopping" },
+        "skincare": { "label": "Skincare Section", "polygon": [[55, 55], [110, 55], [110, 165], [55, 165]], "type": "shopping" },
+        "fragrance": { "label": "Fragrance Section", "polygon": [[0, 165], [55, 165], [55, 260], [0, 260]], "type": "shopping" },
+        "haircare": { "label": "Haircare Section", "polygon": [[55, 165], [110, 165], [110, 260], [55, 260]], "type": "shopping" },
+        "billing": { "label": "Billing Counter", "polygon": [[0, 260], [110, 260], [110, 310], [0, 310]], "type": "billing" }
+      }
+    },
+    "store_004": {
+      "name": "Apex Retail - Connaught Place",
+      "city": "Delhi",
+      "open_time": "10:00",
+      "close_time": "22:00",
+      "cameras": {
+        "cam_entry": { "type": "entry", "position": "main_entrance", "resolution": "1080p", "fps": 15 },
+        "cam_floor": { "type": "floor", "position": "ceiling_center", "resolution": "1080p", "fps": 15 },
+        "cam_billing": { "type": "billing", "position": "billing_area", "resolution": "1080p", "fps": 15 }
+      },
+      "zones": {
+        "entrance": { "label": "Main Entrance", "polygon": [[0, 0], [100, 0], [100, 50], [0, 50]], "type": "entrance" },
+        "cosmetics": { "label": "Cosmetics Section", "polygon": [[0, 50], [50, 50], [50, 150], [0, 150]], "type": "shopping" },
+        "skincare": { "label": "Skincare Section", "polygon": [[50, 50], [100, 50], [100, 150], [50, 150]], "type": "shopping" },
+        "fragrance": { "label": "Fragrance Section", "polygon": [[0, 150], [50, 150], [50, 250], [0, 250]], "type": "shopping" },
+        "haircare": { "label": "Haircare Section", "polygon": [[50, 150], [100, 150], [100, 250], [50, 250]], "type": "shopping" },
+        "billing": { "label": "Billing Counter", "polygon": [[0, 250], [100, 250], [100, 300], [0, 300]], "type": "billing" }
+      }
+    },
+    "store_005": {
+      "name": "Apex Retail - Park Street",
+      "city": "Kolkata",
+      "open_time": "09:00",
+      "close_time": "21:00",
+      "cameras": {
+        "cam_entry": { "type": "entry", "position": "main_entrance", "resolution": "1080p", "fps": 15 },
+        "cam_floor": { "type": "floor", "position": "ceiling_center", "resolution": "1080p", "fps": 15 },
+        "cam_billing": { "type": "billing", "position": "billing_area", "resolution": "1080p", "fps": 15 }
+      },
+      "zones": {
+        "entrance": { "label": "Main Entrance", "polygon": [[0, 0], [90, 0], [90, 45], [0, 45]], "type": "entrance" },
+        "cosmetics": { "label": "Cosmetics Section", "polygon": [[0, 45], [45, 45], [45, 135], [0, 135]], "type": "shopping" },
+        "skincare": { "label": "Skincare Section", "polygon": [[45, 45], [90, 45], [90, 135], [45, 135]], "type": "shopping" },
+        "fragrance": { "label": "Fragrance Section", "polygon": [[0, 135], [45, 135], [45, 225], [0, 225]], "type": "shopping" },
+        "haircare": { "label": "Haircare Section", "polygon": [[45, 135], [90, 135], [90, 225], [45, 225]], "type": "shopping" },
+        "billing": { "label": "Billing Counter", "polygon": [[0, 225], [90, 225], [90, 270], [0, 270]], "type": "billing" }
+      }
+    }
+  }
+}

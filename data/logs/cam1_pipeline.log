@@ -1,0 +1,6 @@
+{"width": 1920, "height": 1080, "total_frames": 4193, "fps": 29.97002997002997, "scale_x": 0.0521, "scale_y": 0.2778, "event": "Video opened", "timestamp": "2026-05-30T13:05:24.714610Z", "level": "info"}
+{"url": "redis://localhost:6379/0", "event": "Redis connected", "timestamp": "2026-05-30T13:05:24.717569Z", "level": "info"}
+OSNet ONNX model not found at /Users/amudaish/Antigravity works/pipeline/models/osnet_x0_25_msmt17.onnx — falling back to histogram embedding.
+{"frame": 1798, "pct": 42.9, "total_emitted": 2700, "total_unique_visitors": 4, "currently_active": 3, "exited": 1, "reentries": 1, "event": "Progress", "timestamp": "2026-05-30T13:10:00.200059Z", "level": "info"}
+{"frame": 3596, "pct": 85.8, "total_emitted": 4300, "total_unique_visitors": 5, "currently_active": 2, "exited": 3, "reentries": 2, "event": "Progress", "timestamp": "2026-05-30T13:14:24.616198Z", "level": "info"}
+{"store_id": "store_001", "camera_id": "cam_entry", "frames_processed": 2096, "total_events": 5943, "total_unique_visitors": 5, "currently_active": 2, "exited": 3, "reentries": 2, "event": "Pipeline complete", "timestamp": "2026-05-30T13:15:09.256472Z", "level": "info"}
