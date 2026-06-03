@@ -4,7 +4,7 @@ import asyncpg
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from api.config import get_settings
+from config import get_settings
 
 # Module-level connection pool
 _pool: asyncpg.Pool | None = None
