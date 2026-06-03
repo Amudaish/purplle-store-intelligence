@@ -9,9 +9,9 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
 
-from api.database import get_pool
-from api.models.heatmap import HeatmapResponse
-from api.services.heatmap_service import HeatmapService
+from database import get_pool
+from models.heatmap import HeatmapResponse
+from services.heatmap_service import HeatmapService
 
 router = APIRouter(tags=["heatmap"])
 

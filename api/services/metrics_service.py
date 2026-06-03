@@ -23,7 +23,7 @@ from typing import Optional
 
 import asyncpg
 
-from api.models.metrics import MetricsResponse, QueueMetrics
+from models.metrics import MetricsResponse, QueueMetrics
 
 logger = logging.getLogger(__name__)
 

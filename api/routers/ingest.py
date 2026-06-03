@@ -10,9 +10,9 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 
-from api.database import get_pool
-from api.models.events import BatchIngestRequest, BatchIngestResponse
-from api.services.ingestion import IngestionService
+from database import get_pool
+from models.events import BatchIngestRequest, BatchIngestResponse
+from services.ingestion import IngestionService
 
 router = APIRouter(tags=["events"])
 

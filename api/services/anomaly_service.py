@@ -30,7 +30,7 @@ from typing import List, Optional
 
 import asyncpg
 
-from api.models.anomalies import Anomaly, AnomalyResponse
+from models.anomalies import Anomaly, AnomalyResponse
 
 logger = logging.getLogger(__name__)
 

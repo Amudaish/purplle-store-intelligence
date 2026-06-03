@@ -9,9 +9,9 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from api.database import get_pool
-from api.models.metrics import MetricsResponse
-from api.services.metrics_service import MetricsService
+from database import get_pool
+from models.metrics import MetricsResponse
+from services.metrics_service import MetricsService
 
 router = APIRouter(tags=["metrics"])
 

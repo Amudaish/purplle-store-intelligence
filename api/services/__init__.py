@@ -1,11 +1,11 @@
 """Services package — re-export all service classes."""
 
-from api.services.ingestion import IngestionService
-from api.services.metrics_service import MetricsService
-from api.services.funnel_service import FunnelService
-from api.services.heatmap_service import HeatmapService
-from api.services.anomaly_service import AnomalyService
-from api.services.pos_matcher import POSMatcher
+from services.ingestion import IngestionService
+from services.metrics_service import MetricsService
+from services.funnel_service import FunnelService
+from services.heatmap_service import HeatmapService
+from services.anomaly_service import AnomalyService
+from services.pos_matcher import POSMatcher
 
 __all__ = [
     "IngestionService",

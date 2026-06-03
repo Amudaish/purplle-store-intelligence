@@ -22,7 +22,7 @@ from typing import Optional
 
 import asyncpg
 
-from api.models.funnel import FunnelResponse, FunnelStage
+from models.funnel import FunnelResponse, FunnelStage
 
 logger = logging.getLogger(__name__)
 

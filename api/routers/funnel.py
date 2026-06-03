@@ -9,9 +9,9 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
 
-from api.database import get_pool
-from api.models.funnel import FunnelResponse
-from api.services.funnel_service import FunnelService
+from database import get_pool
+from models.funnel import FunnelResponse
+from services.funnel_service import FunnelService
 
 router = APIRouter(tags=["funnel"])
 

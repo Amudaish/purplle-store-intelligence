@@ -9,9 +9,9 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
 
-from api.database import get_pool
-from api.models.anomalies import AnomalyResponse
-from api.services.anomaly_service import AnomalyService
+from database import get_pool
+from models.anomalies import AnomalyResponse
+from services.anomaly_service import AnomalyService
 
 router = APIRouter(tags=["anomalies"])
 

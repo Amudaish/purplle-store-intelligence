@@ -23,8 +23,8 @@ from typing import List, Optional
 
 import asyncpg
 
-from api.config import get_settings
-from api.models.heatmap import HeatmapResponse, ZoneHeat
+from config import get_settings
+from models.heatmap import HeatmapResponse, ZoneHeat
 
 logger = logging.getLogger(__name__)
 
