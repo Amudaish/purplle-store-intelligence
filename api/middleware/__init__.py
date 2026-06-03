@@ -1,5 +1,5 @@
 """Middleware package."""
 
-from api.middleware.logging_middleware import StructuredLoggingMiddleware
+from middleware.logging_middleware import StructuredLoggingMiddleware
 
 __all__ = ["StructuredLoggingMiddleware"]
