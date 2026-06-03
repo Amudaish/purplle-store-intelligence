@@ -11,6 +11,8 @@ COPY data/ ./data/
 ENV PYTHONPATH=/app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+# API_BASE_URL must be set at runtime (via Render env vars or docker -e).
+# Leaving it blank will cause a visible warning in logs and fall back to localhost.
 
 EXPOSE 8501
 

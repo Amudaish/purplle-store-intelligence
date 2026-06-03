@@ -1,15 +1,13 @@
 """Application configuration loaded from environment variables."""
 
-from pydantic_settings import BaseSettings
+import os
 from functools import lru_cache
+
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
     """Application settings with environment variable loading."""
-
-    # Database
-    database_url: str = "postgresql+asyncpg://store_intel:store_intel_pass@localhost:5432/store_intelligence"
-    database_url_sync: str = "postgresql://store_intel:store_intel_pass@localhost:5432/store_intelligence"
 
     # Redis
     redis_url: str = "redis://localhost:6379/0"

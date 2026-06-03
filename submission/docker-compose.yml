@@ -1,0 +1,120 @@
+version: "3.9"
+
+services:
+  # ── Infrastructure ─────────────────────────────────────────────────────────
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: store_intel_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: store_intel
+      POSTGRES_PASSWORD: store_intel_pass
+      POSTGRES_DB: store_intelligence
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U store_intel -d store_intelligence"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: store_intel_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── API ────────────────────────────────────────────────────────────────────
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: store_intel_api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://store_intel:store_intel_pass@postgres:5432/store_intelligence
+      DATABASE_URL_SYNC: postgresql://store_intel:store_intel_pass@postgres:5432/store_intelligence
+      REDIS_URL: redis://redis:6379/0
+      API_HOST: "0.0.0.0"
+      API_PORT: "8000"
+      LOG_LEVEL: INFO
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ── Dashboard ──────────────────────────────────────────────────────────────
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: store_intel_dashboard
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      API_BASE_URL: http://api:8000
+      REFRESH_INTERVAL: "30"
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data
+
+  # ── Pipeline (optional — run separately per video file) ────────────────────
+  # Uncomment and configure to process a CCTV video file automatically.
+  #
+  # pipeline:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.pipeline
+  #   container_name: store_intel_pipeline
+  #   depends_on:
+  #     api:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   environment:
+  #     REDIS_URL: redis://redis:6379/0
+  #   volumes:
+  #     - ./data:/app/data
+  #   # Processes CAM 1.mp4 for store_001.
+  #   # For all 5 cameras run: bash scripts/run_pipeline_all.sh
+  #   command: [
+  #     "python", "-m", "pipeline.main",
+  #     "--video", "data/CAM 1.mp4",
+  #     "--store", "store_001",
+  #     "--camera", "cam_entry",
+  #     "--redis", "redis://redis:6379/0",
+  #     "--output", "data/events_output.jsonl",
+  #     "--start-time", "2026-05-29T10:00:00",
+  #     "--frame-skip", "2"
+  #   ]
+
+volumes:
+  postgres_data:
+  redis_data:

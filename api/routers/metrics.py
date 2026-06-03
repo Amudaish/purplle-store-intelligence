@@ -27,7 +27,8 @@ async def _get_service() -> MetricsService:
     summary="Get store KPIs",
     description=(
         "Returns unique visitors, conversion rate, average dwell time, "
-        "queue depth, and abandonment rate. Staff are always excluded."
+        "queue depth, and abandonment rate. Staff are always excluded. "
+        "Returns 404 if the store_id does not exist in the database."
     ),
 )
 async def get_metrics(
@@ -36,4 +37,11 @@ async def get_metrics(
     end: Optional[datetime] = Query(None, description="Window end (ISO 8601)"),
     service: MetricsService = Depends(_get_service),
 ) -> MetricsResponse:
-    return await service.get_metrics(store_id=store_id, start=start, end=end)
+    result = await service.get_metrics(store_id=store_id, start=start, end=end)
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Store '{store_id}' not found. "
+                   "Ensure the stores table is seeded correctly.",
+        )
+    return result

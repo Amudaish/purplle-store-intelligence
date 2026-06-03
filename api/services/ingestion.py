@@ -23,7 +23,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import asyncpg
 
-from models.events import BatchIngestResponse, EventError, EventIn
+from api.models.events import BatchIngestResponse, EventError, EventIn
 
 logger = logging.getLogger(__name__)
 
@@ -67,8 +67,41 @@ class IngestionService:
         errors: List[EventError] = []
 
         async with self.pool.acquire() as conn:
+            # Log DB identity once per batch — proves which DB is being used
+            db_name = await conn.fetchval("SELECT current_database()")
+            schema  = await conn.fetchval("SELECT current_schema()")
+            logger.info(
+                "ingest_batch: db=%s schema=%s events=%d",
+                db_name, schema, len(events),
+            )
+
             for idx, event in enumerate(events):
                 try:
+                    # Pre-validate store_id before INSERT to produce a clear error
+                    store_exists = await conn.fetchval(
+                        "SELECT 1 FROM stores WHERE store_id = $1", event.store_id
+                    )
+                    if not store_exists:
+                        store_count = await conn.fetchval("SELECT COUNT(*) FROM stores")
+                        logger.error(
+                            "store_id '%s' not found in stores table "
+                            "(db=%s schema=%s total_stores=%d)",
+                            event.store_id, db_name, schema, store_count,
+                        )
+                        errors.append(
+                            EventError(
+                                event_id=str(event.event_id),
+                                index=idx,
+                                error="FOREIGN_KEY_ERROR",
+                                message=(
+                                    f"store_id '{event.store_id}' does not exist "
+                                    f"(db={db_name} schema={schema} "
+                                    f"total_stores={store_count})"
+                                ),
+                            )
+                        )
+                        continue
+
                     inserted = await self._insert_event(conn, event)
                     if inserted:
                         await self._upsert_session(conn, event)
@@ -84,11 +117,12 @@ class IngestionService:
                             event_id=str(event.event_id),
                             index=idx,
                             error="FOREIGN_KEY_ERROR",
-                            message=f"store_id '{event.store_id}' does not exist",
+                            message=f"store_id '{event.store_id}' does not exist (db={db_name})",
                         )
                     )
-                    logger.warning(
-                        "FK violation for event %s: %s", event.event_id, exc
+                    logger.error(
+                        "Unexpected FK violation for event %s (db=%s): %s",
+                        event.event_id, db_name, exc,
                     )
                 except Exception as exc:
                     errors.append(

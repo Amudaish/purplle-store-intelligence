@@ -34,6 +34,8 @@ from pathlib import Path
 import asyncpg
 import httpx
 
+import os
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(message)s",
@@ -41,10 +43,18 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-_DEFAULT_DSN    = "postgresql://store_intel:store_intel_pass@localhost:5432/store_intelligence"
+# Prefer DATABASE_URL env var (set automatically on Render) over hardcoded default
+_ENV_DSN = os.getenv("DATABASE_URL", "")
+if _ENV_DSN:
+    # Render provides postgres:// or postgresql://; asyncpg needs postgresql://
+    _ENV_DSN = _ENV_DSN.replace("postgres://", "postgresql://", 1).replace(
+        "postgresql+asyncpg://", "postgresql://", 1
+    )
+
+_DEFAULT_DSN    = _ENV_DSN or "postgresql://store_intel:store_intel_pass@localhost:5432/store_intelligence"
 _DEFAULT_LAYOUT = Path("data/store_layout.json")
 _DEFAULT_EVENTS = Path("data/events_output.jsonl")
-_DEFAULT_API    = "http://localhost:8000"
+_DEFAULT_API    = os.getenv("API_BASE_URL", "http://localhost:8000")
 _DEFAULT_BATCH  = 100
 
 

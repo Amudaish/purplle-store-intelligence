@@ -8,6 +8,7 @@ from __future__ import annotations
 import html as _html
 import json
 import os
+import warnings
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -16,8 +17,20 @@ from typing import Optional
 import httpx
 import streamlit as st
 
-# ── Constants ────────────────────────────────────────────────────────────
-API_BASE             = os.getenv("API_BASE_URL", "http://localhost:8000")
+# ── API base URL resolution ──────────────────────────────────────────────────
+# On Render, API_BASE_URL must be set as an environment variable.
+# We do NOT fall back silently to localhost — that would hide misconfiguration.
+_api_base_env = os.getenv("API_BASE_URL", "").strip()
+if not _api_base_env:
+    warnings.warn(
+        "API_BASE_URL environment variable is not set. "
+        "Falling back to http://localhost:8000 for local development only. "
+        "On Render, set API_BASE_URL to your FastAPI service URL.",
+        stacklevel=1,
+    )
+    _api_base_env = "http://localhost:8000"
+
+API_BASE             = _api_base_env.rstrip("/")
 AUTO_REFRESH_SECONDS = int(os.getenv("REFRESH_INTERVAL", "30"))
 AVG_TICKET_INR       = 1_200
 BENCHMARK_CONV       = 0.15   # 15% industry benchmark
@@ -39,15 +52,28 @@ STORE_CITIES = {
 
 # ── API Helpers ───────────────────────────────────────────────────────────
 
+import logging as _logging
+_log = _logging.getLogger(__name__)
+
+
 @st.cache_data(ttl=AUTO_REFRESH_SECONDS)
 def fetch(endpoint: str) -> Optional[dict]:
+    """Fetch JSON from the API. Returns None on any failure and logs details."""
     url = f"{API_BASE}{endpoint}"
     try:
-        resp = httpx.get(url, timeout=5.0)
+        resp = httpx.get(url, timeout=10.0)
         if resp.status_code in (200, 207):
             return resp.json()
+        _log.warning("API returned %d for %s", resp.status_code, url)
         return None
-    except Exception:
+    except httpx.ConnectError:
+        _log.error(
+            "Cannot connect to API at %s — is API_BASE_URL correct? (%s)",
+            url, API_BASE,
+        )
+        return None
+    except Exception as exc:
+        _log.error("API fetch error for %s: %s", url, exc)
         return None
 
 

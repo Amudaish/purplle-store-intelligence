@@ -1,0 +1,50 @@
+services:
+  # ── FastAPI Service ──────────────────────────────────────────────────────────
+  - type: web
+    name: store-intelligence-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile.api
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: store-intelligence-db
+          property: connectionString
+        # asyncpg requires postgresql:// not postgresql+asyncpg://
+        # We transform this in config.py
+      - key: REDIS_URL
+        value: redis://localhost:6379/0
+        # Override with your Redis URL if using external Redis
+      - key: API_HOST
+        value: "0.0.0.0"
+      - key: API_PORT
+        value: "8000"
+      - key: LOG_LEVEL
+        value: INFO
+      - key: PYTHONPATH
+        value: /app
+    healthCheckPath: /health
+
+  # ── Streamlit Dashboard ──────────────────────────────────────────────────────
+  - type: web
+    name: store-intelligence-dashboard
+    runtime: docker
+    dockerfilePath: ./Dockerfile.dashboard
+    plan: free
+    envVars:
+      # IMPORTANT: Replace this with your actual API service URL from Render.
+      # Format: https://store-intelligence-api.onrender.com (no trailing slash)
+      # Find it in your Render dashboard under the API service → Settings → URL.
+      - key: API_BASE_URL
+        value: https://store-intelligence-api.onrender.com
+      - key: REFRESH_INTERVAL
+        value: "30"
+      - key: PYTHONPATH
+        value: /app
+
+databases:
+  # ── PostgreSQL ───────────────────────────────────────────────────────────────
+  - name: store-intelligence-db
+    plan: free
+    databaseName: store_intelligence
+    user: store_intel

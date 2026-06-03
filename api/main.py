@@ -3,13 +3,8 @@ FastAPI application factory — entry-point for the Store Intelligence API.
 
 Lifecycle
 ---------
-startup  : initialise PostgreSQL pool, create schema, connect Redis
+startup  : initialise PostgreSQL pool, create schema, seed stores, connect Redis
 shutdown : close pool and Redis connection
-
-Middleware
-----------
-- CORS (all origins — restrict in production)
-- StructuredLoggingMiddleware (JSON logs with trace_id)
 
 Routers
 -------
@@ -30,10 +25,10 @@ import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from config import get_settings
-from database import close_db, init_db
-from middleware import StructuredLoggingMiddleware
-from routers import (
+from api.config import get_settings
+from api.database import close_db, get_pool, init_db
+from api.middleware import StructuredLoggingMiddleware
+from api.routers import (
     anomalies_router,
     funnel_router,
     health_router,
@@ -42,7 +37,6 @@ from routers import (
     metrics_router,
 )
 
-# ── Logging configuration ──────────────────────────────────────────────────────
 structlog.configure(
     wrapper_class=structlog.make_filtering_bound_logger(logging.INFO),
     processors=[
@@ -54,21 +48,21 @@ structlog.configure(
 logger = structlog.get_logger(__name__)
 
 
-# ── Lifespan ───────────────────────────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initialise and clean up resources on startup/shutdown."""
-    settings = get_settings()
     logger.info("Starting Store Intelligence API", version="1.0.0")
 
-    # Database
+    # ── Database ───────────────────────────────────────────────────────────────
+    # init_db() reads DATABASE_URL from os.environ directly, creates schema,
+    # seeds all 5 canonical stores, and raises RuntimeError if seeding fails.
     await init_db()
-    logger.info("PostgreSQL pool initialised")
+    logger.info("Database ready.")
 
-    # Redis (optional — API degrades gracefully without it)
+    # ── Redis (optional) ───────────────────────────────────────────────────────
+    settings = get_settings()
     try:
         import redis.asyncio as aioredis  # type: ignore
-
         redis_client = aioredis.from_url(
             settings.redis_url,
             encoding="utf-8",
@@ -79,47 +73,36 @@ async def lifespan(app: FastAPI):
         logger.info("Redis connected", url=settings.redis_url)
     except Exception as exc:
         app.state.redis = None
-        logger.warning(
-            "Redis unavailable — real-time stream publishing disabled",
-            error=str(exc),
-        )
+        logger.warning("Redis unavailable — real-time stream disabled", error=str(exc))
 
-    yield  # ── application is running ──────────────────────────────────────
+    yield
 
-    logger.info("Shutting down Store Intelligence API")
+    logger.info("Shutting down.")
     await close_db()
     if getattr(app.state, "redis", None):
         await app.state.redis.close()
-    logger.info("Shutdown complete")
+    logger.info("Shutdown complete.")
 
 
-# ── Application factory ────────────────────────────────────────────────────────
 def create_app() -> FastAPI:
-    settings = get_settings()
-
     app = FastAPI(
         title="Store Intelligence API",
-        description=(
-            "End-to-end retail analytics API for Apex Retail. "
-            "Processes CCTV event streams into actionable store metrics."
-        ),
+        description="End-to-end retail analytics API.",
         version="1.0.0",
         lifespan=lifespan,
         docs_url="/docs",
         redoc_url="/redoc",
     )
 
-    # ── Middleware ─────────────────────────────────────────────────────────────
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],   # Restrict in production
+        allow_origins=["*"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
     app.add_middleware(StructuredLoggingMiddleware)
 
-    # ── Routers ────────────────────────────────────────────────────────────────
     app.include_router(health_router)
     app.include_router(ingest_router)
     app.include_router(metrics_router)

@@ -39,14 +39,23 @@ class MetricsService:
         store_id: str,
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
-    ) -> MetricsResponse:
+    ) -> Optional[MetricsResponse]:
         async with self.pool.acquire() as conn:
-            # Verify store exists
+            # Log DB identity — verifies same database as ingestion
+            db_name = await conn.fetchval("SELECT current_database()")
+            schema  = await conn.fetchval("SELECT current_schema()")
+            logger.info("get_metrics: store=%s db=%s schema=%s", store_id, db_name, schema)
+
             exists = await conn.fetchval(
                 "SELECT 1 FROM stores WHERE store_id = $1", store_id
             )
             if not exists:
-                return MetricsResponse(store_id=store_id)
+                store_count = await conn.fetchval("SELECT COUNT(*) FROM stores")
+                logger.warning(
+                    "store_id '%s' not found (db=%s schema=%s total_stores=%d)",
+                    store_id, db_name, schema, store_count,
+                )
+                return None  # Router raises HTTP 404
 
             unique_visitors = await self._unique_visitors(conn, store_id, start, end)
             conversion_rate = await self._conversion_rate(conn, store_id, start, end)

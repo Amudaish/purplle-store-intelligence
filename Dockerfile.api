@@ -12,6 +12,7 @@ RUN pip install --no-cache-dir -r api/requirements.txt
 
 COPY api/ ./api/
 COPY data/ ./data/
+COPY scripts/ ./scripts/
 
 ENV PYTHONPATH=/app
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -19,4 +20,7 @@ ENV PYTHONUNBUFFERED=1
 
 EXPOSE 8000
 
-CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+# Use a single worker on Render's free tier to avoid advisory lock contention.
+# For paid tiers with multiple CPUs, increase --workers but the advisory lock
+# in init_db() handles concurrent startup correctly.
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
