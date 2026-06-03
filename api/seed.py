@@ -16,7 +16,7 @@ import sys
 
 import asyncpg
 
-from api.database import CANONICAL_STORES, SCHEMA_SQL, SEED_STORES_SQL
+from database import CANONICAL_STORES, SCHEMA_SQL, SEED_STORES_SQL
 import json
 
 _SCHEMA_SQL = SCHEMA_SQL

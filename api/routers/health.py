@@ -8,8 +8,8 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
-from api.config import get_settings
-from api.database import CANONICAL_STORES, get_pool
+from config import get_settings
+from database import CANONICAL_STORES, get_pool
 
 router = APIRouter(tags=["health"])
 

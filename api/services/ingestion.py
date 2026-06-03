@@ -23,7 +23,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import asyncpg
 
-from api.models.events import BatchIngestResponse, EventError, EventIn
+from models.events import BatchIngestResponse, EventError, EventIn
 
 logger = logging.getLogger(__name__)
 

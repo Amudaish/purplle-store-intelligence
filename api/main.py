@@ -25,10 +25,10 @@ import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.config import get_settings
-from api.database import close_db, get_pool, init_db
-from api.middleware import StructuredLoggingMiddleware
-from api.routers import (
+from config import get_settings
+from database import close_db, get_pool, init_db
+from middleware import StructuredLoggingMiddleware
+from routers import (
     anomalies_router,
     funnel_router,
     health_router,
