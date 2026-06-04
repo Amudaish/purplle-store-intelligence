@@ -81,9 +81,11 @@ with strip_cols[0]:
     )
 
 with strip_cols[1]:
+    # store_001 is index 0 (default). Only store_001 and store_002 are live.
     selected_label = st.selectbox(
         label="Store",
         options=_LABELS,
+        index=0,
         key="store_selector",
         label_visibility="collapsed",
     )

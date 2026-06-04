@@ -8,6 +8,7 @@ from __future__ import annotations
 import html as _html
 import json
 import os
+import warnings
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -16,8 +17,20 @@ from typing import Optional
 import httpx
 import streamlit as st
 
-# ── Constants ────────────────────────────────────────────────────────────
-API_BASE             = os.getenv("API_BASE_URL", "http://localhost:8000")
+# ── API base URL resolution ──────────────────────────────────────────────────
+# On Render, API_BASE_URL must be set as an environment variable.
+# We do NOT fall back silently to localhost — that would hide misconfiguration.
+_api_base_env = os.getenv("API_BASE_URL", "").strip()
+if not _api_base_env:
+    warnings.warn(
+        "API_BASE_URL environment variable is not set. "
+        "Falling back to http://localhost:8000 for local development only. "
+        "On Render, set API_BASE_URL to your FastAPI service URL.",
+        stacklevel=1,
+    )
+    _api_base_env = "http://localhost:8000"
+
+API_BASE             = _api_base_env.rstrip("/")
 AUTO_REFRESH_SECONDS = int(os.getenv("REFRESH_INTERVAL", "30"))
 AVG_TICKET_INR       = 1_200
 BENCHMARK_CONV       = 0.15   # 15% industry benchmark
@@ -25,30 +38,171 @@ BENCHMARK_CONV       = 0.15   # 15% industry benchmark
 STORE_NAMES = {
     "store_001": "Koramangala Flagship",
     "store_002": "Indiranagar Express",
-    "store_003": "Bandra Galleria",
-    "store_004": "Connaught Place Hub",
-    "store_005": "Park Street Boutique",
 }
 STORE_CITIES = {
     "store_001": "Bangalore",
     "store_002": "Bangalore",
-    "store_003": "Mumbai",
-    "store_004": "Delhi",
-    "store_005": "Kolkata",
 }
 
 # ── API Helpers ───────────────────────────────────────────────────────────
 
+import logging as _logging
+_log = _logging.getLogger(__name__)
+
+
 @st.cache_data(ttl=AUTO_REFRESH_SECONDS)
 def fetch(endpoint: str) -> Optional[dict]:
+    """Fetch JSON from the API, normalise the live schema to the internal format."""
     url = f"{API_BASE}{endpoint}"
     try:
-        resp = httpx.get(url, timeout=5.0)
-        if resp.status_code in (200, 207):
-            return resp.json()
+        resp = httpx.get(url, timeout=10.0)
+        if resp.status_code not in (200, 207):
+            _log.warning("API returned %d for %s", resp.status_code, url)
+            return None
+        raw = resp.json()
+        # Normalise live API responses to the internal schema the dashboard expects.
+        return _normalise(endpoint, raw)
+    except httpx.ConnectError:
+        _log.error(
+            "Cannot connect to API at %s — is API_BASE_URL correct? (%s)",
+            url, API_BASE,
+        )
         return None
-    except Exception:
+    except Exception as exc:
+        _log.error("API fetch error for %s: %s", url, exc)
         return None
+
+
+def _normalise(endpoint: str, raw) -> Optional[dict]:
+    """
+    Translate the live Render API response shapes into the internal dict
+    format expected by every dashboard component.
+
+    Live API divergences (discovered via curl against the deployed service):
+
+    /metrics  → returns flat keys: current_queue_depth, avg_dwell_per_zone (dict)
+                instead of nested queue_depth:{current,avg,max} and avg_dwell_time_ms
+    /funnel   → returns {stages:[{stage,count,dropoff_count,dropoff_percentage}]}
+                instead of {funnel:[{stage,count,pct,drop_off}], reentry_sessions}
+    /heatmap  → returns a bare list [{zone_id,visit_count,normalized_score,…}]
+                instead of {store_id,zones:[{zone_id,visits,heat_score,…}]}
+    /anomalies→ returns a bare list [{anomaly_type,severity,message,suggested_action,detected_at}]
+                instead of {store_id,anomalies:[{type,severity,suggested_action,detected_at}]}
+    """
+    if raw is None:
+        return None
+
+    # ── /metrics ────────────────────────────────────────────────────────────
+    if "/metrics" in endpoint:
+        if not isinstance(raw, dict):
+            return {}
+        # Live API uses current_queue_depth (int) instead of queue_depth:{current,avg,max}
+        qd = raw.get("queue_depth")
+        if not isinstance(qd, dict):
+            qd = {
+                "current": int(raw.get("current_queue_depth", 0)),
+                "avg":     0.0,
+                "max":     0,
+            }
+        # Live API avg_dwell_per_zone is a dict of zone→ms; flatten to a single avg
+        adpz = raw.get("avg_dwell_per_zone")
+        if isinstance(adpz, dict) and adpz:
+            avg_dwell_ms = float(sum(adpz.values()) / len(adpz))
+        else:
+            avg_dwell_ms = float(raw.get("avg_dwell_time_ms", 0))
+        return {
+            "store_id":          raw.get("store_id", ""),
+            "unique_visitors":   int(raw.get("unique_visitors", 0)),
+            "conversion_rate":   float(raw.get("conversion_rate", 0.0)),
+            "avg_dwell_time_ms": avg_dwell_ms,
+            "queue_depth":       qd,
+            "abandonment_rate":  float(raw.get("abandonment_rate", 0.0)),
+            "total_transactions":int(raw.get("total_transactions", 0)),
+            "total_revenue_inr": float(raw.get("total_revenue_inr", 0.0)),
+        }
+
+    # ── /funnel ─────────────────────────────────────────────────────────────
+    if "/funnel" in endpoint:
+        if not isinstance(raw, dict):
+            return {"funnel": [], "reentry_sessions": 0}
+        # Live API uses "stages" instead of "funnel", and different sub-keys
+        raw_stages = raw.get("funnel") or raw.get("stages") or []
+        normalised_stages = []
+        for s in raw_stages:
+            normalised_stages.append({
+                "stage":   s.get("stage", ""),
+                "count":   int(s.get("count", 0)),
+                "pct":     float(s.get("pct", s.get("dropoff_percentage", 0.0))),
+                "drop_off":float(s.get("drop_off", s.get("dropoff_percentage", 0.0))),
+            })
+        return {
+            "store_id":         raw.get("store_id", ""),
+            "funnel":           normalised_stages,
+            "reentry_sessions": int(raw.get("reentry_sessions", 0)),
+        }
+
+    # ── /heatmap ─────────────────────────────────────────────────────────────
+    if "/heatmap" in endpoint:
+        # Live API returns a bare list instead of {store_id, zones:[…]}
+        zone_list = raw if isinstance(raw, list) else raw.get("zones", [])
+        normalised_zones = []
+        for z in zone_list:
+            # Live: visit_count + normalized_score; internal: visits + heat_score (0–1)
+            normalised_zones.append({
+                "zone_id":         z.get("zone_id", ""),
+                "visits":          int(z.get("visits", z.get("visit_count", 0))),
+                "avg_dwell_ms":    float(z.get("avg_dwell_ms", 0.0)),
+                "heat_score":      float(z.get("heat_score",
+                                        z.get("normalized_score", 0) / 100.0)),
+                "data_confidence": z.get("data_confidence"),
+            })
+        store_id = raw.get("store_id", "") if isinstance(raw, dict) else ""
+        return {"store_id": store_id, "zones": normalised_zones}
+
+    # ── /anomalies ───────────────────────────────────────────────────────────
+    if "/anomalies" in endpoint:
+        # Live API returns a bare list instead of {store_id, anomalies:[…]}
+        anom_list = raw if isinstance(raw, list) else raw.get("anomalies", [])
+        normalised = []
+        for a in anom_list:
+            # Live: anomaly_type + message; internal: type + (no message field)
+            # Live API uses "WARN" severity; normalise to "HIGH" for component compatibility
+            raw_sev = a.get("severity", "LOW")
+            sev = "HIGH" if raw_sev == "WARN" else raw_sev
+            normalised.append({
+                "type":             a.get("type", a.get("anomaly_type", "")),
+                "severity":         sev,
+                "suggested_action": a.get("suggested_action",
+                                        a.get("message", "")),
+                "detected_at":      a.get("detected_at", ""),
+            })
+        store_id = raw.get("store_id", "") if isinstance(raw, dict) else ""
+        return {"store_id": store_id, "anomalies": normalised}
+
+    # ── /health ───────────────────────────────────────────────────────────────
+    if endpoint == "/health":
+        if not isinstance(raw, dict):
+            return {}
+        # Live API uses stale_feed_warnings list; translate to stale_feed bool
+        # that app.py reads via health_data.get("stale_feed", False)
+        warnings_list = raw.get("stale_feed_warnings", [])
+        return {
+            "status":              raw.get("status", "error"),
+            "database":            raw.get("database", "error"),
+            "stale_feed":          bool(warnings_list),
+            "stale_feed_warnings": warnings_list,
+            "stale_store_ids": [
+                w.split(" ")[1]          # "Store STORE_ID feed is stale..."
+                for w in warnings_list
+                if w.startswith("Store ")
+            ],
+            "last_event_timestamp_per_store": raw.get("last_event_timestamp_per_store", {}),
+            "uptime_s":  raw.get("uptime_s", 0),
+            "version":   raw.get("version", ""),
+        }
+
+    # ── all other endpoints (health, etc.) — pass through as-is ─────────────
+    return raw if isinstance(raw, dict) else {}
 
 
 def load_recent_events(store_id: str, limit: int = 60, scan_lines: int = 2000) -> list:
@@ -366,9 +520,12 @@ def build_alert_state(metrics: dict, anomaly_data: dict) -> dict:
 
     _sev_order = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3}
     _type_label = {
-        "QUEUE_SPIKE":      "Queue depth spike",
-        "CONVERSION_DROP":  "Conversion rate drop",
-        "DEAD_ZONE":        "Dead zone detected",
+        "QUEUE_SPIKE":         "Queue depth spike",
+        "BILLING_QUEUE_SPIKE": "Billing queue spike",
+        "CONVERSION_DROP":     "Conversion rate drop",
+        "DEAD_ZONE":           "Dead zone detected",
+        "STALE_FEED":          "Camera feed stale",
+        "HIGH_DWELL":          "Unusually high dwell time",
     }
 
     if anomalies:

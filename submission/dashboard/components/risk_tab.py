@@ -15,9 +15,12 @@ _SEVERITY_CFG = {
 }
 
 _TYPE_LABEL = {
-    "QUEUE_SPIKE":      "Queue Depth Spike",
-    "CONVERSION_DROP":  "Conversion Rate Drop",
-    "DEAD_ZONE":        "Dead Zone Detected",
+    "QUEUE_SPIKE":         "Queue Depth Spike",
+    "BILLING_QUEUE_SPIKE": "Billing Queue Spike",
+    "CONVERSION_DROP":     "Conversion Rate Drop",
+    "DEAD_ZONE":           "Dead Zone Detected",
+    "STALE_FEED":          "Camera Feed Stale",
+    "HIGH_DWELL":          "Unusually High Dwell Time",
 }
 
 
