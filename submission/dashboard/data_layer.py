@@ -50,7 +50,6 @@ import logging as _logging
 _log = _logging.getLogger(__name__)
 
 
-@st.cache_data(ttl=AUTO_REFRESH_SECONDS)
 def fetch(endpoint: str) -> Optional[dict]:
     """Fetch JSON from the API, normalise the live schema to the internal format."""
     url = f"{API_BASE}{endpoint}"
