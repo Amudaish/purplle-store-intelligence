@@ -28,7 +28,7 @@ if not _api_base_env:
         "On Render, set API_BASE_URL to your FastAPI service URL.",
         stacklevel=1,
     )
-    _api_base_env = "http://localhost:8000"
+    _api_base_env = "https://purplle-store-intelligence-08v7.onrender.com"
 
 API_BASE             = _api_base_env.rstrip("/")
 AUTO_REFRESH_SECONDS = int(os.getenv("REFRESH_INTERVAL", "30"))
