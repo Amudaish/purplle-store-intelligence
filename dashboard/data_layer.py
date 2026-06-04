@@ -133,7 +133,11 @@ def _normalise(endpoint: str, raw) -> Optional[dict]:
                 "stage":   s.get("stage", ""),
                 "count":   int(s.get("count", 0)),
                 "pct":     float(s.get("pct", s.get("dropoff_percentage", 0.0))),
-                "drop_off":float(s.get("drop_off", s.get("dropoff_percentage", 0.0))),
+                "drop_off": float(
+                                s.get("drop_off")
+                                if s.get("drop_off") is not None
+                                else s.get("dropoff_percentage", 0.0)
+                            ),
             })
         return {
             "store_id":         raw.get("store_id", ""),
