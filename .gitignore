@@ -4,3 +4,4 @@ __pycache__/
 yolov8s.pt
 data/*.mp4
 
+data/
